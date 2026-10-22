@@ -10,12 +10,15 @@
 int line = 1;
 char lexeme[MAXSTRLEN + 1];
 
+// Informa a linha e o motivo de um erro encontrado pelo lexer.
 static void lexer_error(const char *message)
 {
 	fprintf(stderr, "lexer error at line %d: %s\n", line, message);
 	exit(-3);
 }
 
+// Avanca pelos espacos em branco antes de ler um token.
+// Atualiza o numero da linha e devolve o primeiro caractere util.
 void skipspaces(FILE *tape)
 {
 	int c;
@@ -29,11 +32,14 @@ void skipspaces(FILE *tape)
 		ungetc(c, tape);
 }
 
+// Descarta comentarios no formato { ... } e os espacos entre eles.
+// Conta as quebras de linha e avisa se chegar ao fim sem fechar um comentario.
 void skipcomments(FILE *tape)
 {
 	int head;
 
-	_skpspc: //rótulo (igual em assembly)
+	// Volta aqui quando encontra mais de um comentario seguido.
+	_skpspc:
 	skipspaces(tape);
 	
 	if( (head = getc(tape)) == '{' ){
@@ -56,6 +62,8 @@ void skipcomments(FILE *tape)
 	if(head != EOF) ungetc(head, tape);
 }
 
+// Verifica se os proximos caracteres formam o operador ':='.
+// Se formar, grava o lexema e retorna ASGN; caso contrario, restaura a leitura.
 int isASGN(FILE *tape){
 	int first = getc(tape);
 	if (first == ':') {
@@ -74,11 +82,14 @@ int isASGN(FILE *tape){
     return 0;
 }
 
+// Le um numero, incluindo parte decimal e expoente (como 1.5e2).
+// Grava os caracteres em lexeme e valida o formato antes de retornar NUM.
 int isNUM(FILE *tape){
 	int c = getc(tape);
 	int i = 0;
 	char *end;
 
+	// Permite numeros que comecam pelo ponto, como .5.
 	if (c == '.') {
 			int next = getc(tape);
 			if (!isdigit(next)) {
@@ -108,12 +119,15 @@ int isNUM(FILE *tape){
 	if (c != EOF)
 			ungetc(c, tape);
 
+	// Confirma que toda a sequencia lida forma um numero valido.
 	(void)strtod(lexeme, &end);
 	if (*end != 0)
 			lexer_error("malformed numeric literal");
 	return NUM;
 }
 
+// Reconhece nomes iniciados por letra e seguidos de letras ou digitos.
+// Armazena o nome em lexeme, respeitando o limite de tamanho.
 int isID(FILE *tape){
 	/*
 	 ID = [A-Za-z][A-Za-z0-9]
@@ -137,6 +151,8 @@ int isID(FILE *tape){
 	return 0;
 }
 
+// Ponto de entrada do analisador lexico: pula comentarios e tenta
+// reconhecer ID, NUM ou ASGN. Outros caracteres sao retornados diretamente.
 int getToken(FILE *source){
 	int token;
 

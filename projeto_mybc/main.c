@@ -7,8 +7,9 @@
 
 FILE *source, *output;
 
+// Define a entrada pelo terminal e a saida pela tela.
+// Le o primeiro token, executa o parser e retorna seu estado de erro.
 int main(void){
-	// source = fopen(argv[1], "r");
 	source= stdin;
 	output= stdout;
 
@@ -18,4 +19,4 @@ int main(void){
 	
 	return parser_status;
 }
-//sla
+
